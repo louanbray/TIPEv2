@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "journal.h"
 #include "robot.h"
 
 //* Donne l'état de la simulation
@@ -48,6 +49,8 @@ Simulation* creer_simulation(int rayon, int nombreRobots, int temps_de_cycle, in
 
     simulation->idSimulation = rand();
 
+    JOURNAL_INFO("Nouvelle simulation créée (ID:%d)", simulation->idSimulation);
+
     return simulation;
 }
 
@@ -72,6 +75,9 @@ int boucle_principale(Simulation* simulation) {
         if (simulation->etat == EN_PAUSE) continue;
         simule_avancement(simulation);
     }
+
+    JOURNAL_INFO("Fin de la simulation (%d)", simulation->idSimulation);
+
     return 1;
 }
 
@@ -81,6 +87,9 @@ int demarre_simulation(Simulation* simulation) {
 
     peupler_monde(simulation->monde);
     simulation->etat = EN_COURS;
+
+    JOURNAL_INFO("Début de la simulation (%d)", simulation->idSimulation);
+
     return 1;
     return boucle_principale(simulation);
 }

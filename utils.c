@@ -10,5 +10,5 @@ bool barriere_probabiliste(double probabilite) {
 
 //* Renvoie un nombre entre m-d et m+d
 double nombre_autour_de(double m, double d) {
-    return m + ((rand() * 2 * d) / (double)RAND_MAX);
+    return m + ((rand() / (double)RAND_MAX) * 2.0 - 1.0) * d;
 }
