@@ -5,6 +5,23 @@
 
 typedef struct Robot Robot;
 
+//* Permet de faire apparaitre un robot sur un monde
 Robot* creer_robot(Monde* monde, int temps_de_cycle, int autonomie_initiale);
+//* Permet de libérer la mémoire du robot
+void detruire_robot(Robot* robot);
+
+//* Permet à un robot de se synchroniser à la carte de la base du monde qu'il explore
+void synchroniser_robot(Robot* robot);
+
+//* Routine du robot (renvoie 1 si le robot est en vie, 0 sinon)
+int actualiser_robot(Robot* robot);
+
+//* Accesseurs
+int get_robot_x(Robot* robot);
+int get_robot_y(Robot* robot);
+
+//* Permet d'accéder à la carte interne du robot
+//? Utilisé pour débug
+Case** get_carte_robot(Robot* robot);
 
 #endif  // !ROBOT_H

@@ -1,8 +1,11 @@
 #include "monde.h"
 
-#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
+#include "utils.h"
+
+//* Là où tout commence, la structure qui contient tout un monde
 typedef struct Monde {
     int rayon;
     Case** grille;
@@ -19,6 +22,7 @@ typedef struct Monde {
     int taille_totale;
 } Monde;
 
+//* Pour une carte de la taille du monde à mettre dans un état vierge
 void carte_vide(Monde* monde, Case** carte) {
     for (int i = 0; i < monde->taille_ligne; i++) {
         carte[i] = (Case*)malloc(monde->taille_ligne * sizeof(Case));
@@ -29,6 +33,31 @@ void carte_vide(Monde* monde, Case** carte) {
     }
 }
 
+//* Pour afficher une carte de la taille du monde
+void print_carte(Monde* monde, Case** carte, int x, int y) {
+    printf("\n\nCarte (%ld): \n", carte);
+    for (int i = 0; i < monde->taille_ligne; i++) {
+        for (int j = 0; j < monde->taille_ligne; j++) {
+            if (j == x && i == y) printf(">");
+            switch (carte[i][j].type) {
+                case VIDE:
+                    printf("- ");
+                    break;
+                case DANGER:
+                    printf("D ");
+                    break;
+                case MUR:
+                    printf("* ");
+                    break;
+                default:
+                    break;
+            }
+        }
+        printf("\n");
+    }
+}
+
+//* Créé un nouveau Monde
 Monde* creer_monde(int rayon) {
     Monde* monde = (Monde*)malloc(sizeof(Monde));
 
@@ -54,15 +83,30 @@ Monde* creer_monde(int rayon) {
 
     return monde;
 }
-//! TODO
-void generer_mine(Monde* monde);
-void generer_dangers(Monde* monde);
 
+//! TODO
+//* Génère les murs
+void generer_mine(Monde* monde) {}
+
+//* Génère les cases "danger" avec une probabilité PROBA_DANGER
+void generer_dangers(Monde* monde) {
+    for (int i = 0; i < monde->taille_ligne; i++) {
+        for (int j = 0; j < monde->taille_ligne; j++) {
+            if (monde->grille[i][j].type == VIDE && barriere_probabiliste(PROBA_DANGER)) {
+                monde->grille[i][j].type = DANGER;
+                monde->grille[i][j].proba_danger = nombre_autour_de(MILIEU, DEVIATION);
+            }
+        }
+    }
+}
+
+//* Génère le monde
 void peupler_monde(Monde* monde) {
     generer_mine(monde);
     generer_dangers(monde);
 }
 
+//* Permet d'enregistrer une découverte dans la carte interne de la base
 void ajouter_decouverte(Monde* monde, const Decouverte* decouverte) {
     if (monde->carte_base[decouverte->x][decouverte->y].exploree) return;
 
@@ -72,12 +116,14 @@ void ajouter_decouverte(Monde* monde, const Decouverte* decouverte) {
     monde->taille_journal++;
 }
 
+//* Permet d'ajouter une liste de découvertes à la carte interne de la base
 void mettre_a_jour_journal(Monde* monde, Decouverte* nouvelles_decouvertes, int nb_nouvelles) {
     for (int i = 0; i < nb_nouvelles; i++) {
         ajouter_decouverte(monde, &nouvelles_decouvertes[i]);
     }
 }
 
+//* Permet de demander à la base les nouvelles découvertes depuis le dernier passage
 void synchroniser_carte_base(Monde* monde, Case** carte, int* index_de_maj) {
     for (int i = *index_de_maj; i < monde->taille_journal; i++) {
         Decouverte decouverte = monde->journal_global[i];
@@ -87,6 +133,7 @@ void synchroniser_carte_base(Monde* monde, Case** carte, int* index_de_maj) {
     *index_de_maj = monde->taille_journal;
 }
 
+//* Accesseurs
 int get_rayon(Monde* monde) {
     return monde->rayon;
 }
@@ -111,6 +158,15 @@ int get_nb_cases_explorees(Monde* monde) {
     return monde->nb_cases_explorees;
 }
 
+Case** get_grille_monde(Monde* monde) {
+    return monde->grille;
+}
+
+Case** get_carte_base(Monde* monde) {
+    return monde->carte_base;
+}
+
+//* Libère la mémoire du Monde
 void detruire_monde(Monde* monde) {
     for (int i = 0; i < monde->taille_ligne; i++) {
         free(monde->grille[i]);
