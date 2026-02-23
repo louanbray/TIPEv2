@@ -33,6 +33,7 @@ typedef struct Robot {
     int autonomie;
     int timer_de_retour;
     int temps_de_cycle;
+    bool en_attente;
     bool alive;
 } Robot;
 
@@ -43,6 +44,7 @@ Robot* creer_robot(Monde* monde, int temps_de_cycle, int autonomie_initiale) {
     robot->monde = monde;
     robot->carte = (Case**)malloc(get_taille_ligne(monde) * sizeof(Case*));
     carte_vide(monde, robot->carte);
+    robot->carte[get_centre_y(monde)][get_centre_x(monde)].exploree = true;
 
     robot->journal_local = (Decouverte*)malloc(5 * temps_de_cycle * sizeof(Decouverte));
 
@@ -63,6 +65,7 @@ Robot* creer_robot(Monde* monde, int temps_de_cycle, int autonomie_initiale) {
     robot->timer_de_retour = temps_de_cycle;  //! TODO : à gérer correctement
     robot->temps_de_cycle = temps_de_cycle;
     robot->alive = true;
+    robot->en_attente = false;
 
     JOURNAL_INFO("Robot (%p) cree en (%d,%d) | autonomie:%d | cycle:%d", (void*)robot, robot->x, robot->y, robot->autonomie, robot->temps_de_cycle);
     return robot;
@@ -364,7 +367,7 @@ static void entrer_dans_phase(Robot* robot, EtatRobot etat_cible) {
             JOURNAL_AVERT("Robot (%p) : aucun chemin vers la base !", (void*)robot);
         }
     } else if (etat_cible == RECHERCHE_INEXPLORE) {
-        int longueur = bfs_vers_frontier(robot);
+        int longueur = bfs_vers_inexploree(robot);
         if (longueur > 0) {
             robot->etat = RECHERCHE_INEXPLORE;
             JOURNAL_INFO("Robot (%p) cible inexplorée (%d,%d) | chemin : %d pas", (void*)robot, robot->cible_x, robot->cible_y, longueur);
@@ -372,8 +375,15 @@ static void entrer_dans_phase(Robot* robot, EtatRobot etat_cible) {
             // Case inexplorée adjacente (cas theorique)
             robot->etat = EXPLORATION;
         } else {
-            // Aucune case inexplorée accessible dans la zone explorée connue -> retour à la base pour synchronisation et espérer que d'autres robots aient exploré de nouvelles zones
-            entrer_dans_phase(robot, RETOUR);
+            if (est_synchronise(robot->monde, robot->dernier_index_de_maj) && robot->nombre_decouvertes == 0) {
+                JOURNAL_INFO("Robot (%p) : aucune case inexploree accessible et aucune nouvelle synchronisation possible -> fin d'utilisation", (void*)robot);
+                // le robot a exploré de ce qu'il pouvait atteindre, il n'a plus rien à faire
+                robot->en_attente = true;
+            } else {
+                JOURNAL_INFO("Robot (%p) : aucune case inexploree accessible retour vers la base pour sauvegarder", (void*)robot);
+                // Va sauvegarder ses données à la base puis se met en veille.
+                entrer_dans_phase(robot, RETOUR);
+            }
         }
     }
 }
@@ -444,7 +454,7 @@ int actualiser_robot(Robot* robot) {
             if (robot->cible_etape + 1 >= robot->cible_longueur) {
                 // Case non explorée cible adjacente -> reprise du modèle d'exploration classique pour découvrir la case et ses alentours
                 robot->etat = EXPLORATION;
-                JOURNAL_INFO("Robot (%p) arrive en frontier (%d,%d), reprise exploration", (void*)robot, robot->x, robot->y);
+                JOURNAL_INFO("Robot (%p) arrive à la case inexplorée (%d,%d), reprise exploration", (void*)robot, robot->x, robot->y);
             }
             break;
         }
@@ -462,6 +472,9 @@ int actualiser_robot(Robot* robot) {
     }
     if (!robot->alive)
         return 0;  //! TODO : Implémenter la mort du robot + les stats de données perdues etc...
+    if (robot->en_attente) {
+        return 2;  //! Le robot n'est pas mort mais il n'a plus rien à faire.
+    }
     return 1;
 }
 

@@ -3,12 +3,12 @@
 #include <stdbool.h>
 
 //* Utile pour la dispertion de danger dans le monde
-#define PROBA_DANGER 0.1
+#define PROBA_DANGER 0
 #define MILIEU 0.2
 #define DEVIATION 0.1
 
 //* Utile pour la génération de murs aléatoires
-#define PROBA_MUR 0.5
+#define PROBA_MUR 0.3
 //* Probabilité de supprimer un mur intérieur pour créer des boucles dans le labyrinthe
 #define PROBA_BOUCLE 0.3
 
@@ -52,6 +52,9 @@ void peupler_monde(Monde* monde, bool labyrinthe);
 void mettre_a_jour_journal(Monde* monde, Decouverte* nouvelles_decouvertes, int nb_nouvelles);
 //* Permet de demander à la base les nouvelles découvertes depuis le dernier passage
 void synchroniser_carte_base(Monde* monde, Case** carte, int* index_de_maj);
+
+//* Permet de savoir si un robot est à jour avec la base
+bool est_synchronise(Monde* monde, int dernier_index_de_maj);
 
 //* Accesseurs
 int get_rayon(Monde* monde);

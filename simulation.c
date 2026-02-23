@@ -19,8 +19,11 @@ typedef struct Simulation {
     Monde* monde;
     Robot** robots;
     bool* robotsEnVie;
+    bool* robotsEnAttente;
+    int nombreDeRobotsEnAttente;
     int nombreDeRobotsEnVie;
     int nombreDeRobots;
+
     // Stats* stats;
     int idSimulation;
     EtatSimulation etat;
@@ -34,6 +37,7 @@ Simulation* creer_simulation(int rayon, int nombreRobots, int temps_de_cycle, in
 
     Robot** robots = malloc(sizeof(Robot*) * nombreRobots);
     bool* robotsEnVie = malloc(sizeof(bool) * nombreRobots);
+    bool* robotsEnAttente = calloc(sizeof(bool), nombreRobots);
 
     for (int i = 0; i < nombreRobots; i++) {
         robots[i] = creer_robot(monde, temps_de_cycle, autonomie_initiale);
@@ -43,7 +47,9 @@ Simulation* creer_simulation(int rayon, int nombreRobots, int temps_de_cycle, in
     simulation->monde = monde;
     simulation->robots = robots;
     simulation->robotsEnVie = robotsEnVie;
+    simulation->robotsEnAttente = robotsEnAttente;
     simulation->nombreDeRobots = nombreRobots;
+    simulation->nombreDeRobotsEnAttente = 0;
     simulation->nombreDeRobotsEnVie = nombreRobots;
     simulation->etat = BLANK;
 
@@ -59,14 +65,27 @@ void simule_avancement(Simulation* simulation) {
     if (simulation->etat != EN_COURS) return;
     for (int i = 0; i < simulation->nombreDeRobots; i++) {
         if (!simulation->robotsEnVie[i]) continue;
-        if (actualiser_robot(simulation->robots[i]) == 0) {
+        if (simulation->robotsEnAttente[i]) continue;
+        int val = actualiser_robot(simulation->robots[i]);
+        if (val == 0) {
             simulation->robotsEnVie[i] = false;
             simulation->nombreDeRobotsEnVie--;
             JOURNAL_AVERT("Robot (%p) hors service | robots restants : %d/%d", (void*)simulation->robots[i], simulation->nombreDeRobotsEnVie, simulation->nombreDeRobots);
+        } else if (val == 2) {
+            if (simulation->robotsEnAttente[i]) continue;
+            simulation->robotsEnAttente[i] = true;
+            simulation->nombreDeRobotsEnAttente++;
+            JOURNAL_INFO("Robot (%p) a fini son exploration | robots en veille : %d/%d", (void*)simulation->robots[i], simulation->nombreDeRobotsEnAttente, simulation->nombreDeRobots);
         }
     }
-    //! TODO : SI EXPLORATION FINIE : TERMINER LA SIMULATION
-    if (simulation->nombreDeRobotsEnVie <= 0) simulation->etat = TERMINEE;
+
+    if (simulation->nombreDeRobotsEnVie <= 0) {
+        simulation->etat = TERMINEE;
+        JOURNAL_INFO("Simulation terminée (ID:%d) | tous les robots sont hors service", simulation->idSimulation);
+    } else if (simulation->nombreDeRobotsEnAttente >= simulation->nombreDeRobotsEnVie) {
+        simulation->etat = TERMINEE;
+        JOURNAL_INFO("Simulation terminée (ID:%d) | toutes les zones accessibles ont été explorées", simulation->idSimulation);
+    }
 }
 
 //* Boucle de simulation. Renvoie 1 quand elle est terminée
@@ -124,11 +143,10 @@ void print_simulation(Simulation* simulation) {
     print_carte(monde, get_carte_base(monde), -1, -1);
     for (int i = 0; i < simulation->nombreDeRobots; i++) {
         Robot* robot = simulation->robots[i];
-        if (!simulation->robotsEnVie[i]) {
-            printf("\n\n\nRobot %p est défaillant", (void*)robot);
-            continue;
-        }
-        printf("\n\n\n----------------- Carte(Robot %p) -----------------", (void*)robot);
+        if (!simulation->robotsEnVie[i])
+            printf("\n\n\n----------------- Carte(Robot défaillant %p) -----------------", (void*)robot);
+        else
+            printf("\n\n\n----------------- Carte(Robot %p) -----------------", (void*)robot);
         print_carte(monde, get_carte_robot(robot), get_robot_x(robot), get_robot_y(robot));
     }
 }
