@@ -65,7 +65,7 @@ void simule_avancement(Simulation* simulation) {
             JOURNAL_AVERT("Robot (%p) hors service | robots restants : %d/%d", (void*)simulation->robots[i], simulation->nombreDeRobotsEnVie, simulation->nombreDeRobots);
         }
     }
-    //! SI EXPLORATION FINIE : TERMINER LA SIMULATION
+    //! TODO : SI EXPLORATION FINIE : TERMINER LA SIMULATION
     if (simulation->nombreDeRobotsEnVie <= 0) simulation->etat = TERMINEE;
 }
 
