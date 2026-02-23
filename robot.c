@@ -45,7 +45,7 @@ Robot* creer_robot(Monde* monde, int temps_de_cycle, int autonomie_initiale) {
     robot->y = get_centre_y(monde);
 
     robot->autonomie = autonomie_initiale;
-    robot->timer_de_retour = 0;  //! à gérer correctement TODO
+    robot->timer_de_retour = temps_de_cycle;  //! à gérer correctement TODO
     robot->temps_de_cycle = temps_de_cycle;
     robot->alive = true;
 

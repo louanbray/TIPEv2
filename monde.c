@@ -35,7 +35,7 @@ void carte_vide(Monde* monde, Case** carte) {
 
 //* Pour afficher une carte de la taille du monde
 void print_carte(Monde* monde, Case** carte, int x, int y) {
-    printf("\n\nCarte (%ld): \n", carte);
+    printf("\n\nCarte (%p): \n", (void*)carte);
     for (int i = 0; i < monde->taille_ligne; i++) {
         for (int j = 0; j < monde->taille_ligne; j++) {
             if (j == x && i == y) printf(">");

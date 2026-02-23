@@ -15,6 +15,8 @@ int main() {
     demarre_simulation(sim);
     print_simulation(sim);
 
+    detruire_simulation(sim);
+
     fermer_journal();
 
     return EXIT_SUCCESS;

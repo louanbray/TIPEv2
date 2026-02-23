@@ -9,6 +9,9 @@ Simulation* creer_simulation(int rayon, int nombreRobots, int temps_de_cycle, in
 //* Lance la simulation
 int demarre_simulation(Simulation* simulation);
 
+//* Libère la mémoire de la simulation et de tous ses composants
+void detruire_simulation(Simulation* simulation);
+
 //* Affiche les cartes de tout les simulés
 void print_simulation(Simulation* simulation);
 

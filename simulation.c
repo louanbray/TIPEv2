@@ -30,10 +30,10 @@ typedef struct Simulation {
 Simulation* creer_simulation(int rayon, int nombreRobots, int temps_de_cycle, int autonomie_initiale) {
     Simulation* simulation = malloc(sizeof(Simulation));
 
-    Monde* monde = creer_monde(20);
+    Monde* monde = creer_monde(rayon);
 
     Robot** robots = malloc(sizeof(Robot*) * nombreRobots);
-    bool* robotsEnVie = malloc(sizeof(nombreRobots));
+    bool* robotsEnVie = malloc(sizeof(bool) * nombreRobots);
 
     for (int i = 0; i < nombreRobots; i++) {
         robots[i] = creer_robot(monde, temps_de_cycle, autonomie_initiale);
@@ -92,6 +92,25 @@ int demarre_simulation(Simulation* simulation) {
 
     return 1;
     return boucle_principale(simulation);
+}
+
+//* Libère la mémoire de la simulation et de tous ses composants
+void detruire_simulation(Simulation* simulation) {
+    if (simulation == NULL) return;
+
+    for (int i = 0; i < simulation->nombreDeRobots; i++) {
+        if (simulation->robots[i] != NULL) {
+            detruire_robot(simulation->robots[i]);
+        }
+    }
+    free(simulation->robots);
+    free(simulation->robotsEnVie);
+
+    detruire_monde(simulation->monde);
+
+    JOURNAL_INFO("Simulation détruite (ID:%d)", simulation->idSimulation);
+
+    free(simulation);
 }
 
 //* Affiche les cartes de tout les simulés
