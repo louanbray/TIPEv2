@@ -162,9 +162,8 @@ void ajouter_decouverte(Monde* monde, const Decouverte* decouverte) {
 
 //* Permet d'ajouter une liste de découvertes à la carte interne de la base
 void mettre_a_jour_journal(Monde* monde, Decouverte* nouvelles_decouvertes, int nb_nouvelles) {
-    for (int i = 0; i < nb_nouvelles; i++) {
-        ajouter_decouverte(monde, &nouvelles_decouvertes[i]);
-    }
+    for (int i = 0; i < nb_nouvelles; i++) ajouter_decouverte(monde, &nouvelles_decouvertes[i]);
+    if (nb_nouvelles > 0) JOURNAL_INFO("Ajout de %d nouvelles découvertes à la base (monde: %p)", nb_nouvelles, (void*)monde);
 }
 
 //* Permet de demander à la base les nouvelles découvertes depuis le dernier passage
