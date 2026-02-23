@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "journal.h"
+
 //* Etat du robot dans sa routine
 typedef enum EtatRobot {
     EXPLORATION,
@@ -49,11 +51,13 @@ Robot* creer_robot(Monde* monde, int temps_de_cycle, int autonomie_initiale) {
     robot->temps_de_cycle = temps_de_cycle;
     robot->alive = true;
 
+    JOURNAL_INFO("Robot (%p) cree en (%d,%d) | autonomie:%d | cycle:%d", (void*)robot, robot->x, robot->y, robot->autonomie, robot->temps_de_cycle);
     return robot;
 }
 
 //* Permet à un robot de se synchroniser à la carte de la base du monde qu'il explore
 void synchroniser_robot(Robot* robot) {
+    JOURNAL_INFO("Robot (%p) synchronisation : %d decouverte(s) transferee(s)", (void*)robot, robot->nombre_decouvertes);
     mettre_a_jour_journal(robot->monde, robot->journal_local, robot->nombre_decouvertes);
     synchroniser_carte_base(robot->monde, robot->carte, &robot->dernier_index_de_maj);
     robot->nombre_decouvertes = 0;
@@ -63,7 +67,10 @@ void synchroniser_robot(Robot* robot) {
 //* Réduis l'autonomie du robot et modifie son état s'il est à cours de batterie
 void degrade_robot(Robot* robot) {
     robot->autonomie--;
-    if (robot->autonomie <= 0) robot->alive = false;
+    if (robot->autonomie <= 0) {
+        robot->alive = false;
+        JOURNAL_AVERT("Robot (%p) hors service en (%d,%d) | autonomie epuisee", (void*)robot, robot->x, robot->y);
+    }
 }
 
 //* A appeler après chaque déplacement en phase d'exploration, gère le changement de phase vers retour
@@ -72,6 +79,7 @@ void decremente_timer_robot(Robot* robot) {
     if (robot->timer_de_retour <= 0) {
         robot->timer_de_retour = robot->temps_de_cycle;
         robot->etat = RETOUR;
+        JOURNAL_INFO("Robot (%p) passe en phase RETOUR depuis (%d,%d)", (void*)robot, robot->x, robot->y);
     }
 }
 
@@ -122,6 +130,7 @@ Case** get_carte_robot(Robot* robot) {
 
 //* Permet de libérer la mémoire du robot
 void detruire_robot(Robot* robot) {
+    JOURNAL_INFO("Robot (%p) detruit | autonomie restante:%d", (void*)robot, robot->autonomie);
     for (int i = 0; i < get_taille_ligne(robot->monde); i++) {
         free(robot->carte[i]);
     }

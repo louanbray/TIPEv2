@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "journal.h"
 #include "utils.h"
 
 //* Là où tout commence, la structure qui contient tout un monde
@@ -81,6 +82,7 @@ Monde* creer_monde(int rayon) {
     carte_vide(monde, monde->grille);
     carte_vide(monde, monde->carte_base);
 
+    JOURNAL_INFO("Monde cree | rayon:%d | taille:%dx%d | cases:%d", monde->rayon, monde->taille_ligne, monde->taille_ligne, monde->taille_totale);
     return monde;
 }
 
@@ -90,14 +92,22 @@ void generer_mine(Monde* monde) {}
 
 //* Génère les cases "danger" avec une probabilité PROBA_DANGER
 void generer_dangers(Monde* monde) {
+    int nb_dangers = 0;
+    int nb_vides = 0;
+    for (int i = 0; i < monde->taille_ligne; i++)
+        for (int j = 0; j < monde->taille_ligne; j++)
+            if (monde->grille[i][j].type == VIDE) nb_vides++;
+
     for (int i = 0; i < monde->taille_ligne; i++) {
         for (int j = 0; j < monde->taille_ligne; j++) {
             if (monde->grille[i][j].type == VIDE && barriere_probabiliste(PROBA_DANGER)) {
                 monde->grille[i][j].type = DANGER;
                 monde->grille[i][j].proba_danger = nombre_autour_de(MILIEU, DEVIATION);
+                nb_dangers++;
             }
         }
     }
+    JOURNAL_INFO("Dangers generes : %d case(s) sur %d vides (%.1f%%)", nb_dangers, nb_vides, 100.0 * nb_dangers / nb_vides);
 }
 
 //* Génère le monde
@@ -125,12 +135,14 @@ void mettre_a_jour_journal(Monde* monde, Decouverte* nouvelles_decouvertes, int 
 
 //* Permet de demander à la base les nouvelles découvertes depuis le dernier passage
 void synchroniser_carte_base(Monde* monde, Case** carte, int* index_de_maj) {
+    int nb_sync = monde->taille_journal - *index_de_maj;
     for (int i = *index_de_maj; i < monde->taille_journal; i++) {
         Decouverte decouverte = monde->journal_global[i];
         carte[decouverte.x][decouverte.y].type = decouverte.type;
         carte[decouverte.x][decouverte.y].exploree = true;
     }
     *index_de_maj = monde->taille_journal;
+    if (nb_sync > 0) JOURNAL_INFO("Carte (%p) synchronisee : %d nouvelle(s) case(s)", (void*)carte, nb_sync);
 }
 
 //* Accesseurs
@@ -168,6 +180,7 @@ Case** get_carte_base(Monde* monde) {
 
 //* Libère la mémoire du Monde
 void detruire_monde(Monde* monde) {
+    JOURNAL_INFO("Monde detruit | rayon:%d | journal:%d entree(s)", monde->rayon, monde->taille_journal);
     for (int i = 0; i < monde->taille_ligne; i++) {
         free(monde->grille[i]);
         free(monde->carte_base[i]);

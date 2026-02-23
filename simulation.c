@@ -58,11 +58,11 @@ Simulation* creer_simulation(int rayon, int nombreRobots, int temps_de_cycle, in
 void simule_avancement(Simulation* simulation) {
     if (simulation->etat != EN_COURS) return;
     for (int i = 0; i < simulation->nombreDeRobots; i++) {
-        if (simulation->robotsEnVie[i]) {
-            if (actualiser_robot(simulation->robots[i]) == 0) {
-                simulation->robotsEnVie[i] = false;
-                simulation->nombreDeRobotsEnVie--;
-            }
+        if (!simulation->robotsEnVie[i]) continue;
+        if (actualiser_robot(simulation->robots[i]) == 0) {
+            simulation->robotsEnVie[i] = false;
+            simulation->nombreDeRobotsEnVie--;
+            JOURNAL_AVERT("Robot (%p) hors service | robots restants : %d/%d", (void*)simulation->robots[i], simulation->nombreDeRobotsEnVie, simulation->nombreDeRobots);
         }
     }
     //! SI EXPLORATION FINIE : TERMINER LA SIMULATION
@@ -76,7 +76,7 @@ int boucle_principale(Simulation* simulation) {
         simule_avancement(simulation);
     }
 
-    JOURNAL_INFO("Fin de la simulation (%d)", simulation->idSimulation);
+    JOURNAL_INFO("Fin de la simulation (ID:%d)", simulation->idSimulation);
 
     return 1;
 }
@@ -88,9 +88,8 @@ int demarre_simulation(Simulation* simulation) {
     peupler_monde(simulation->monde);
     simulation->etat = EN_COURS;
 
-    JOURNAL_INFO("Début de la simulation (%d)", simulation->idSimulation);
+    JOURNAL_INFO("Début de la simulation (ID:%d)", simulation->idSimulation);
 
-    return 1;
     return boucle_principale(simulation);
 }
 
