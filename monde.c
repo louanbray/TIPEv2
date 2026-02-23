@@ -151,11 +151,11 @@ void peupler_monde(Monde* monde, bool labyrinthe) {
 
 //* Permet d'enregistrer une découverte dans la carte interne de la base
 void ajouter_decouverte(Monde* monde, const Decouverte* decouverte) {
-    if (monde->carte_base[decouverte->x][decouverte->y].exploree) return;
+    if (monde->carte_base[decouverte->y][decouverte->x].exploree) return;
 
     monde->journal_global[monde->taille_journal] = *decouverte;
-    monde->carte_base[decouverte->x][decouverte->y].exploree = true;
-    monde->carte_base[decouverte->x][decouverte->y].type = decouverte->type;
+    monde->carte_base[decouverte->y][decouverte->x].exploree = true;
+    monde->carte_base[decouverte->y][decouverte->x].type = decouverte->type;
     monde->nb_cases_explorees++;
     monde->taille_journal++;
 }
@@ -172,8 +172,8 @@ void synchroniser_carte_base(Monde* monde, Case** carte, int* index_de_maj) {
     int nb_sync = monde->taille_journal - *index_de_maj;
     for (int i = *index_de_maj; i < monde->taille_journal; i++) {
         Decouverte decouverte = monde->journal_global[i];
-        carte[decouverte.x][decouverte.y].type = decouverte.type;
-        carte[decouverte.x][decouverte.y].exploree = true;
+        carte[decouverte.y][decouverte.x].type = decouverte.type;
+        carte[decouverte.y][decouverte.x].exploree = true;
     }
     *index_de_maj = monde->taille_journal;
     if (nb_sync > 0) JOURNAL_INFO("Carte (%p) synchronisee avec la base: %d nouvelle(s) case(s) (monde: %p)", (void*)carte, nb_sync, (void*)monde);
