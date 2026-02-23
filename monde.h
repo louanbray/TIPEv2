@@ -41,10 +41,6 @@ Monde* creer_monde(int rayon);
 //* Libère la mémoire du Monde
 void detruire_monde(Monde* monde);
 
-//! TODO -> SUPPRIMER CES DEUX LIGNES (FONCITONS INTERNES)
-void generer_mine(Monde* monde);
-void generer_dangers(Monde* monde);
-
 //* Génère le monde
 void peupler_monde(Monde* monde);
 //* Permet d'ajouter une liste de découvertes à la carte interne de la base

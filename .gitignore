@@ -1,3 +1,4 @@
 simulations.log
 *.o
 *.exe
+build/

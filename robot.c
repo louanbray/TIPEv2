@@ -60,11 +60,13 @@ void synchroniser_robot(Robot* robot) {
     robot->etat = EXPLORATION;
 }
 
+//* Réduis l'autonomie du robot et modifie son état s'il est à cours de batterie
 void degrade_robot(Robot* robot) {
     robot->autonomie--;
     if (robot->autonomie <= 0) robot->alive = false;
 }
 
+//* A appeler après chaque déplacement en phase d'exploration, gère le changement de phase vers retour
 void decremente_timer_robot(Robot* robot) {
     robot->timer_de_retour--;
     if (robot->timer_de_retour <= 0) {
