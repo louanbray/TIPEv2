@@ -12,7 +12,7 @@ int main() {
 
     Simulation* sim = creer_simulation(20, 3, 50, 500);
 
-    demarre_simulation(sim);
+    demarre_simulation(sim, true);
     print_simulation(sim);
 
     detruire_simulation(sim);

@@ -7,6 +7,11 @@
 #define MILIEU 0.2
 #define DEVIATION 0.1
 
+//* Utile pour la génération de murs aléatoires
+#define PROBA_MUR 0.5
+//* Probabilité de supprimer un mur intérieur pour créer des boucles dans le labyrinthe
+#define PROBA_BOUCLE 0.3
+
 typedef struct Monde Monde;
 
 //* Permet de définir le type de case
@@ -42,7 +47,7 @@ Monde* creer_monde(int rayon);
 void detruire_monde(Monde* monde);
 
 //* Génère le monde
-void peupler_monde(Monde* monde);
+void peupler_monde(Monde* monde, bool labyrinthe);
 //* Permet d'ajouter une liste de découvertes à la carte interne de la base
 void mettre_a_jour_journal(Monde* monde, Decouverte* nouvelles_decouvertes, int nb_nouvelles);
 //* Permet de demander à la base les nouvelles découvertes depuis le dernier passage

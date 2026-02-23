@@ -14,7 +14,7 @@ typedef struct Monde {
     int nb_cases_explorees;
     int nb_cases_danger;
     int nb_cases_totales;
-    int nb_cases_a_explorer;
+    int nb_cases_explorables;
     int centre_x;
     int centre_y;
     Decouverte* journal_global;
@@ -70,8 +70,8 @@ Monde* creer_monde(int rayon) {
     monde->centre_y = rayon;
     monde->nb_cases_explorees = 0;
     monde->nb_cases_danger = 0;
-    monde->nb_cases_totales = monde->taille_totale;  //! soustraire les murs (cf peupler_monde)
-    monde->nb_cases_a_explorer = monde->taille_totale;
+    monde->nb_cases_totales = monde->taille_totale;
+    monde->nb_cases_explorables = monde->taille_totale;
     monde->taille_journal = 0;
 
     monde->grille = (Case**)malloc(monde->taille_ligne * sizeof(Case*));
@@ -82,24 +82,54 @@ Monde* creer_monde(int rayon) {
     carte_vide(monde, monde->grille);
     carte_vide(monde, monde->carte_base);
 
-    JOURNAL_INFO("Monde cree | rayon:%d | taille:%dx%d | cases:%d", monde->rayon, monde->taille_ligne, monde->taille_ligne, monde->taille_totale);
+    JOURNAL_INFO("Monde (%p) cree | rayon:%d | taille:%dx%d | cases:%d", (void*)monde, monde->rayon, monde->taille_ligne, monde->taille_ligne, monde->taille_totale);
     return monde;
 }
 
-//! TODO
-//* Génère les murs
-void generer_mine(Monde* monde) {}
+//* Labyrinthe, ou plutot carte telle que toutes les cases différentes d'un mur soient accessibles
+static void generer_labyrinthe(Monde* monde) {}
+
+//* Place des murs aléatoirement sauf autour de la base avec une probabilité PROBA_MUR
+static void generer_murs_aleatoires(Monde* monde) {
+    int taille = monde->taille_ligne;
+    int centre_x = monde->centre_x;
+    int centre_y = monde->centre_y;
+    int nb_murs = 0;
+
+    for (int i = 0; i < taille; i++) {
+        for (int j = 0; j < taille; j++) {
+            //? Protéger la base et ses 8 voisins immédiats
+            if (abs(i - centre_y) <= 1 && abs(j - centre_x) <= 1) continue;
+            if (barriere_probabiliste(PROBA_MUR)) {
+                monde->grille[i][j].type = MUR;
+                nb_murs++;
+            }
+        }
+    }
+    JOURNAL_INFO("Murs aleatoires generes | murs:%d (%.1f%%) (monde: %p)", nb_murs, 100.0 * nb_murs / (taille * taille), (void*)monde);
+}
+
+//* Génère les murs de la mine
+void generer_mine(Monde* monde, bool labyrinthe) {
+    if (labyrinthe)
+        generer_labyrinthe(monde);
+    else
+        generer_murs_aleatoires(monde);
+
+    int nb_explorables = 0;
+    for (int i = 0; i < monde->taille_ligne; i++)
+        for (int j = 0; j < monde->taille_ligne; j++)
+            if (monde->grille[i][j].type != MUR) nb_explorables++;
+    monde->nb_cases_explorables = nb_explorables;
+}
 
 //* Génère les cases "danger" avec une probabilité PROBA_DANGER
 void generer_dangers(Monde* monde) {
     int nb_dangers = 0;
-    int nb_vides = 0;
-    for (int i = 0; i < monde->taille_ligne; i++)
-        for (int j = 0; j < monde->taille_ligne; j++)
-            if (monde->grille[i][j].type == VIDE) nb_vides++;
 
     for (int i = 0; i < monde->taille_ligne; i++) {
         for (int j = 0; j < monde->taille_ligne; j++) {
+            if (i == monde->centre_y && j == monde->centre_x) continue;
             if (monde->grille[i][j].type == VIDE && barriere_probabiliste(PROBA_DANGER)) {
                 monde->grille[i][j].type = DANGER;
                 monde->grille[i][j].proba_danger = nombre_autour_de(MILIEU, DEVIATION);
@@ -107,13 +137,16 @@ void generer_dangers(Monde* monde) {
             }
         }
     }
-    JOURNAL_INFO("Dangers generes : %d case(s) sur %d vides (%.1f%%)", nb_dangers, nb_vides, 100.0 * nb_dangers / nb_vides);
+    monde->nb_cases_danger = nb_dangers;
+    JOURNAL_INFO("Dangers generes : %d case(s) sur %d vides (%.1f%%) (monde: %p)", nb_dangers, monde->nb_cases_explorables, 100.0 * nb_dangers / monde->nb_cases_explorables, (void*)monde);
 }
 
 //* Génère le monde
-void peupler_monde(Monde* monde) {
-    generer_mine(monde);
+void peupler_monde(Monde* monde, bool labyrinthe) {
+    JOURNAL_INFO("Début de la génération du terrain - Labyrinthe : %d (monde: %p)", labyrinthe, (void*)monde);
+    generer_mine(monde, labyrinthe);
     generer_dangers(monde);
+    JOURNAL_INFO("Terrain entièrement généré (monde: %p)", (void*)monde);
 }
 
 //* Permet d'enregistrer une découverte dans la carte interne de la base
@@ -123,6 +156,7 @@ void ajouter_decouverte(Monde* monde, const Decouverte* decouverte) {
     monde->journal_global[monde->taille_journal] = *decouverte;
     monde->carte_base[decouverte->x][decouverte->y].exploree = true;
     monde->carte_base[decouverte->x][decouverte->y].type = decouverte->type;
+    monde->nb_cases_explorees++;
     monde->taille_journal++;
 }
 
@@ -142,7 +176,7 @@ void synchroniser_carte_base(Monde* monde, Case** carte, int* index_de_maj) {
         carte[decouverte.x][decouverte.y].exploree = true;
     }
     *index_de_maj = monde->taille_journal;
-    if (nb_sync > 0) JOURNAL_INFO("Carte (%p) synchronisee : %d nouvelle(s) case(s)", (void*)carte, nb_sync);
+    if (nb_sync > 0) JOURNAL_INFO("Carte (%p) synchronisee avec la base: %d nouvelle(s) case(s) (monde: %p)", (void*)carte, nb_sync, (void*)monde);
 }
 
 //* Accesseurs
@@ -180,7 +214,7 @@ Case** get_carte_base(Monde* monde) {
 
 //* Libère la mémoire du Monde
 void detruire_monde(Monde* monde) {
-    JOURNAL_INFO("Monde detruit | rayon:%d | journal:%d entree(s)", monde->rayon, monde->taille_journal);
+    JOURNAL_INFO("Monde (%p) detruit | rayon:%d | journal:%d entree(s)", (void*)monde, monde->rayon, monde->taille_journal);
     for (int i = 0; i < monde->taille_ligne; i++) {
         free(monde->grille[i]);
         free(monde->carte_base[i]);

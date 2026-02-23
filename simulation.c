@@ -82,10 +82,10 @@ int boucle_principale(Simulation* simulation) {
 }
 
 //* Lance la simulation
-int demarre_simulation(Simulation* simulation) {
+int demarre_simulation(Simulation* simulation, bool labyrinthe) {
     if (simulation->etat != BLANK) return -1;
 
-    peupler_monde(simulation->monde);
+    peupler_monde(simulation->monde, labyrinthe);
     simulation->etat = EN_COURS;
 
     JOURNAL_INFO("Début de la simulation (ID:%d)", simulation->idSimulation);
@@ -114,20 +114,21 @@ void detruire_simulation(Simulation* simulation) {
 
 //* Affiche les cartes de tout les simulés
 void print_simulation(Simulation* simulation) {
+    Monde* monde = simulation->monde;
     printf("\n\n\n\n-----------------------------------------------------");
     printf("\n              Simulation (ID:%d)", simulation->idSimulation);
     printf("\n-----------------------------------------------------");
     printf("\n\n\n----------------------- Monde -----------------------");
-    print_carte(simulation->monde, get_grille_monde(simulation->monde), -1, -1);
+    print_carte(monde, get_grille_monde(monde), get_centre_x(monde), get_centre_y(monde));
     printf("\n\n\n-------------------- Carte(Base) --------------------");
-    print_carte(simulation->monde, get_carte_base(simulation->monde), -1, -1);
+    print_carte(monde, get_carte_base(monde), -1, -1);
     for (int i = 0; i < simulation->nombreDeRobots; i++) {
+        Robot* robot = simulation->robots[i];
         if (!simulation->robotsEnVie[i]) {
-            printf("\n\n\nRobot n°%d est défaillant", i + 1);
+            printf("\n\n\nRobot %p est défaillant", (void*)robot);
             continue;
         }
-        printf("\n\n\n----------------- Carte(Robot n°%d) -----------------", i + 1);
-        Robot* robot = simulation->robots[i];
-        print_carte(simulation->monde, get_carte_robot(robot), get_robot_x(robot), get_robot_y(robot));
+        printf("\n\n\n----------------- Carte(Robot %p) -----------------", (void*)robot);
+        print_carte(monde, get_carte_robot(robot), get_robot_x(robot), get_robot_y(robot));
     }
 }
