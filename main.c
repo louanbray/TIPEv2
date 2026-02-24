@@ -7,7 +7,7 @@
 #include "simulation.h"
 #include "stats.h"
 
-void arguments(int argc, char* argv[], bool* log, bool* xlog, bool* print, bool* xprint, bool* analyse, int* seed, int* cycle, int* robots, int* rayon, int* autonomie, int* pas) {
+void arguments(int argc, char* argv[], bool* log, bool* xlog, bool* print, bool* xprint, bool* analyse, int* seed, int* cycle, int* robots, int* rayon, int* autonomie, int* pas, int* repetitions) {
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--log") == 0) {
             *log = true;
@@ -45,6 +45,9 @@ void arguments(int argc, char* argv[], bool* log, bool* xlog, bool* print, bool*
         } else if (strcmp(argv[i], "--pas") == 0 && i + 1 < argc) {
             *pas = atoi(argv[i + 1]);
             i++;
+        } else if (strcmp(argv[i], "--repetitions") == 0 && i + 1 < argc) {
+            *repetitions = atoi(argv[i + 1]);
+            i++;
         } else if (strcmp(argv[i], "--analyse") == 0) {
             *analyse = true;
         } else if (strcmp(argv[i], "--help") == 0) {
@@ -63,6 +66,7 @@ void arguments(int argc, char* argv[], bool* log, bool* xlog, bool* print, bool*
             printf("  --autonomie <n>     : Autonomie initiale (defaut: 500)\n");
             printf("  --analyse           : Analyse CSV sur differents temps de cycle\n");
             printf("  --pas <n>           : Pas du cycle pour --analyse (defaut: 5)\n");
+            printf("  --repetitions <n>   : Simulations par pas pour --analyse (defaut: 100)\n");
             printf("\nExemples :\n");
             printf("  %s --print\n", argv[0]);
             printf("  %s --seed 42 --cycle 80 --print\n", argv[0]);
@@ -73,22 +77,25 @@ void arguments(int argc, char* argv[], bool* log, bool* xlog, bool* print, bool*
 }
 
 //* Lance une serie de simulations en faisant varier le temps de cycle.
+//* Pour chaque cycle, moyenne sur 'repetitions' runs (seeds : seed+0 .. seed+n-1).
 //* Affiche les resultats au format CSV sur stdout (redirigeable vers fichier .csv).
-void lance_analyse(int seed, int rayon, int nb_robots, int autonomie, int pas) {
-    fprintf(stderr, "[Analyse] rayon=%d  robots=%d  autonomie=%d  pas=%d  seed=%d\n", rayon, nb_robots, autonomie, pas, seed);
-    print_stats_csv_entete();
+void lance_analyse(int seed, int rayon, int nb_robots, int autonomie, int pas, int repetitions) {
+    fprintf(stderr, "[Analyse] rayon=%d  robots=%d  autonomie=%d  pas=%d  repetitions=%d  seed=%d\n", rayon, nb_robots, autonomie, pas, repetitions, seed);
+    print_stats_csv_moyenne_entete();
     for (int cycle = pas; cycle <= autonomie; cycle += pas) {
-        srand(seed);
-
-        Simulation* sim = creer_simulation(rayon, nb_robots, cycle, autonomie);
-        demarre_simulation(sim, false);
-
-        Stats stats = get_stats_simulation(sim);
-        print_stats_csv(&stats);
-
+        StatsMoyenne stats_moyenne = {0};
+        stats_moyenne.temps_de_cycle = cycle;
+        for (int rep = 0; rep < repetitions; rep++) {
+            srand(seed + rep);
+            Simulation* sim = creer_simulation(rayon, nb_robots, cycle, autonomie);
+            demarre_simulation(sim, false);
+            Stats stats = get_stats_simulation(sim);
+            accumuler_stats(&stats_moyenne, &stats);
+            detruire_simulation(sim);
+        }
+        moyenner_stats(&stats_moyenne, repetitions);
+        print_stats_csv_moyenne(&stats_moyenne);
         fflush(stdout);
-        detruire_simulation(sim);
-
         fprintf(stderr, "  cycle=%4d termine\n", cycle);
     }
     fprintf(stderr, "[Analyse] Termine.\n");
@@ -97,14 +104,14 @@ void lance_analyse(int seed, int rayon, int nb_robots, int autonomie, int pas) {
 int main(int argc, char* argv[]) {
     bool log = false, xlog = false, print = false, xprint = false, analyse = false;
     int seed = time(NULL);
-    int cycle = 50, robots = 200, rayon = 20, autonomie = 500, pas = 5;
-    arguments(argc, argv, &log, &xlog, &print, &xprint, &analyse, &seed, &cycle, &robots, &rayon, &autonomie, &pas);
+    int cycle = 50, robots = 5, rayon = 20, autonomie = 500, pas = 5, repetitions = 100;
+    arguments(argc, argv, &log, &xlog, &print, &xprint, &analyse, &seed, &cycle, &robots, &rayon, &autonomie, &pas, &repetitions);
     srand(seed);
 
     if (log) initialiser_journal();
 
     if (analyse) {
-        lance_analyse(seed, rayon, robots, autonomie, pas);
+        lance_analyse(seed, rayon, robots, autonomie, pas, repetitions);
     } else {
         Simulation* sim = creer_simulation(rayon, robots, cycle, autonomie);
         demarre_simulation(sim, false);

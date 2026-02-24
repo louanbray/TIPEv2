@@ -57,16 +57,18 @@ $(BUILD)/utils.o:      utils.c      utils.h
 #   --autonomie <n>     : Autonomie initiale (defaut: 500)
 #   --analyse           : Analyse CSV sur differents temps de cycle
 #   --pas <n>           : Pas du cycle pour --analyse (defaut: 5)
+#   --repetitions <n>   : Simulations par pas pour --analyse (defaut: 100)
 #
 # Exemples :
 #   make run ARGS="--print"
 #   make run ARGS="--seed 42 --cycle 80 --print"
 #   make analyse SEED=42
+#   make analyse SEED=42 ARGS="--repetitions 500"
 ARGS ?=
 SEED ?= 0
 
 analyse: $(TARGET)
-	./$(TARGET) --analyse --seed $(SEED) 2>nul
+	./$(TARGET) --analyse --seed $(SEED) $(ARGS) 2>derniere_analyse.log
 
 run: $(TARGET)
 	./$(TARGET) $(ARGS)

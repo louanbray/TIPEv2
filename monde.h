@@ -3,9 +3,9 @@
 #include <stdbool.h>
 
 //* Utile pour la dispertion de danger dans le monde
-#define PROBA_DANGER 0
-#define MILIEU 0.2
-#define DEVIATION 0.1
+#define PROBA_DANGER 0.05
+#define MILIEU 0.1
+#define DEVIATION 0.05
 
 //* Utile pour la génération de murs aléatoires
 #define PROBA_MUR 0.3

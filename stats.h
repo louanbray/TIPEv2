@@ -19,8 +19,29 @@ typedef struct Stats {
 //* Affichage lisible (pour --print)
 void print_stats(const Stats* stats);
 
-//* Affichage CSV — en-tête puis lignes (pour --analyse)
-void print_stats_csv_entete(void);
-void print_stats_csv(const Stats* stats);
+//? Inutile [
+/////* Affichage CSV d'une simulation unique
+// void print_stats_csv_entete();
+// void print_stats_csv(const Stats* stats);
+//? ]
+
+//* Permet d'accumuler des stats pour en faire la moyenne
+typedef struct StatsMoyenne {
+    int temps_de_cycle;
+    int nb_repetitions;
+    double donnees_brutes_transmises;
+    double donnees_brutes_perdues;
+    double donnees_nettes_perdues;
+    double cases_uniques_connues;
+    double cases_explorables;
+    double robots_morts;
+    double robots_en_attente;
+} StatsMoyenne;
+
+void accumuler_stats(StatsMoyenne* stats_moyenne, const Stats* stats);
+void moyenner_stats(StatsMoyenne* stats_moyenne, int nb_repetitions);
+
+void print_stats_csv_moyenne_entete();
+void print_stats_csv_moyenne(const StatsMoyenne* stats_moyenne);
 
 #endif  // !STATS_H
