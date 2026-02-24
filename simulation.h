@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include "stats.h"
+
 typedef struct Simulation Simulation;
 
 //* Créé une simulation contenant un monde de rayon 'rayon' contenant une distribution de 'nombreRobots' robots ayant un certain temps_de_cycle et une certaine autonomie
@@ -16,5 +18,8 @@ void detruire_simulation(Simulation* simulation);
 
 //* Affiche les cartes de tout les simulés
 void print_simulation(Simulation* simulation, bool details);
+
+//* Collecte les statistiques de fin de simulation
+Stats get_stats_simulation(Simulation* simulation);
 
 #endif  // !SIMULATION_H

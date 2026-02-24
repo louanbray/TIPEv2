@@ -22,6 +22,8 @@ typedef struct Robot {
     Decouverte* journal_local;
     EtatExploration etat;
     int nombre_decouvertes;
+    int donnees_transmises;      // Total des découvertes transmises à la base (cumulatif)
+    int donnees_nettes_perdues;  // Cases perdues nettes figées au moment de la mort (-1 si vivant)
     int dernier_index_de_maj;
     int x;
     int y;
@@ -51,6 +53,8 @@ Robot* creer_robot(Monde* monde, int temps_de_cycle, int autonomie_initiale) {
 
     robot->etat = EXPLORATION;
     robot->nombre_decouvertes = 0;
+    robot->donnees_transmises = 0;
+    robot->donnees_nettes_perdues = -1;
     robot->dernier_index_de_maj = 0;
 
     robot->x = get_centre_x(monde);
@@ -82,14 +86,29 @@ void synchroniser_robot(Robot* robot) {
     synchroniser_carte_base(robot->monde, robot->carte, &robot->dernier_index_de_maj);
     mettre_a_jour_journal(robot->monde, robot->journal_local, robot->nombre_decouvertes);
 
+    robot->donnees_transmises += robot->nombre_decouvertes;
     robot->nombre_decouvertes = 0;
     entrer_dans_phase(robot, RECHERCHE_CIBLE);
+}
+
+//* Figer les pertes nettes au moment de la mort : cases du journal local inconnues de la base à cet instant
+static void figer_pertes_nettes(Robot* robot) {
+    Case** carte_base = get_carte_base(robot->monde);
+    int nettes = 0;
+    for (int i = 0; i < robot->nombre_decouvertes; i++) {
+        int x = robot->journal_local[i].x;
+        int y = robot->journal_local[i].y;
+        if (!carte_base[y][x].exploree) nettes++;
+    }
+    robot->donnees_nettes_perdues = nettes;
+    JOURNAL_AVERT("Robot (%p) pertes nettes : %d/%d cases", (void*)robot, nettes, robot->nombre_decouvertes);
 }
 
 //* Réduis l'autonomie du robot et modifie son état s'il est à cours de batterie
 void degrade_robot(Robot* robot) {
     robot->autonomie--;
     if (robot->autonomie <= 0) {
+        figer_pertes_nettes(robot);
         robot->alive = false;
         JOURNAL_AVERT("Robot (%p) hors service en (%d,%d) | autonomie epuisee", (void*)robot, robot->x, robot->y);
     }
@@ -123,6 +142,7 @@ void robot_regarde_case(Robot* robot, int x, int y, CaseType type) {
 void marche_sur_case_danger(Robot* robot) {
     Case** grille_monde = get_grille_monde(robot->monde);
     if (barriere_probabiliste(grille_monde[robot->y][robot->x].proba_danger)) {
+        figer_pertes_nettes(robot);
         robot->alive = false;
         JOURNAL_AVERT("Robot (%p) tue par un danger en (%d,%d)", (void*)robot, robot->x, robot->y);
     }
@@ -487,6 +507,18 @@ int get_robot_x(Robot* robot) {
 
 int get_robot_y(Robot* robot) {
     return robot->y;
+}
+
+int get_donnees_transmises_robot(Robot* robot) {
+    return robot->donnees_transmises;
+}
+
+int get_donnees_perdues_robot(Robot* robot) {
+    return robot->nombre_decouvertes;
+}
+
+int get_donnees_nettes_perdues_robot(Robot* robot) {
+    return robot->donnees_nettes_perdues;
 }
 
 //* Permet d'accéder à la carte interne du robot

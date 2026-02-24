@@ -4,7 +4,9 @@
 #include <stdlib.h>
 
 #include "journal.h"
+#include "monde.h"
 #include "robot.h"
+#include "stats.h"
 
 //* Donne l'état de la simulation
 typedef enum EtatSimulation {
@@ -26,6 +28,7 @@ typedef struct Simulation {
 
     // Stats* stats;
     int idSimulation;
+    int temps_de_cycle;
     EtatSimulation etat;
 } Simulation;
 
@@ -51,6 +54,7 @@ Simulation* creer_simulation(int rayon, int nombreRobots, int temps_de_cycle, in
     simulation->nombreDeRobots = nombreRobots;
     simulation->nombreDeRobotsEnAttente = 0;
     simulation->nombreDeRobotsEnVie = nombreRobots;
+    simulation->temps_de_cycle = temps_de_cycle;
     simulation->etat = BLANK;
 
     simulation->idSimulation = rand();
@@ -122,12 +126,34 @@ void detruire_simulation(Simulation* simulation) {
     }
     free(simulation->robots);
     free(simulation->robotsEnVie);
+    free(simulation->robotsEnAttente);
 
     detruire_monde(simulation->monde);
 
     JOURNAL_INFO("Simulation détruite (ID:%d)", simulation->idSimulation);
 
     free(simulation);
+}
+
+//* Collecte les statistiques de fin de simulation
+Stats get_stats_simulation(Simulation* simulation) {
+    Stats stats = {0};
+    stats.temps_de_cycle = simulation->temps_de_cycle;
+
+    for (int i = 0; i < simulation->nombreDeRobots; i++) {
+        stats.donnees_brutes_transmises += get_donnees_transmises_robot(simulation->robots[i]);
+        if (!simulation->robotsEnVie[i]) {
+            stats.robots_morts++;
+            stats.donnees_brutes_perdues += get_donnees_perdues_robot(simulation->robots[i]);
+            stats.donnees_nettes_perdues += get_donnees_nettes_perdues_robot(simulation->robots[i]);
+        } else {
+            stats.robots_en_attente++;
+        }
+    }
+
+    stats.cases_uniques_connues = get_nb_cases_explorees(simulation->monde);
+    stats.cases_explorables = get_nb_cases_explorables(simulation->monde);
+    return stats;
 }
 
 //* Affiche les cartes de tout les simulés

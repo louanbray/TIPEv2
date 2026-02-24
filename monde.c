@@ -203,6 +203,10 @@ int get_nb_cases_explorees(Monde* monde) {
     return monde->nb_cases_explorees;
 }
 
+int get_nb_cases_explorables(Monde* monde) {
+    return monde->nb_cases_explorables;
+}
+
 bool est_synchronise(Monde* monde, int dernier_index_de_maj) {
     return dernier_index_de_maj == monde->taille_journal;
 }

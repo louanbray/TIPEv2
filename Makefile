@@ -31,11 +31,11 @@ $(BUILD)/%.o: %.c | $(BUILD)
 #  Dépendances des headers
 # ============================================================
 
-$(BUILD)/main.o:       main.c       journal.h simulation.h
+$(BUILD)/main.o:       main.c       journal.h simulation.h stats.h
 $(BUILD)/journal.o:    journal.c    journal.h
 $(BUILD)/monde.o:      monde.c      monde.h utils.h
 $(BUILD)/robot.o:      robot.c      robot.h monde.h
-$(BUILD)/simulation.o: simulation.c simulation.h robot.h monde.h journal.h
+$(BUILD)/simulation.o: simulation.c simulation.h robot.h monde.h journal.h stats.h
 $(BUILD)/stats.o:      stats.c      stats.h
 $(BUILD)/utils.o:      utils.c      utils.h
 
@@ -44,16 +44,29 @@ $(BUILD)/utils.o:      utils.c      utils.h
 # ============================================================
 
 # Arguments disponibles (voir main.c) :
-#   --log           : Activer la journalisation
-#   --xlog          : Activer la journalisation détaillée
-#   --print         : Afficher les cartes à la fin de la simulation
-#   --xprint        : Afficher les cartes détaillées à la fin de la simulation
-#   --debug         : Activer le mode debug (log + print)
-#   --xdebug        : Activer le mode debug détaillé (xlog + xprint)
-#   --seed <number> : Définir la graine pour la génération aléatoire
+#   --log               : Activer la journalisation
+#   --xlog              : Activer la journalisation detaillee
+#   --print             : Afficher les cartes et stats a la fin
+#   --xprint            : Afficher les cartes detaillees a la fin
+#   --debug             : log + print
+#   --xdebug            : xlog + xprint
+#   --seed <n>          : Graine aleatoire
+#   --cycle <n>         : Temps de cycle (defaut: 50)
+#   --robots <n>        : Nombre de robots (defaut: 200)
+#   --rayon <n>         : Rayon du monde (defaut: 20)
+#   --autonomie <n>     : Autonomie initiale (defaut: 500)
+#   --analyse           : Analyse CSV sur differents temps de cycle
+#   --pas <n>           : Pas du cycle pour --analyse (defaut: 5)
 #
-# Utilisation : make run ARGS="--log --seed 42"
+# Exemples :
+#   make run ARGS="--print"
+#   make run ARGS="--seed 42 --cycle 80 --print"
+#   make analyse SEED=42
 ARGS ?=
+SEED ?= 0
+
+analyse: $(TARGET)
+	./$(TARGET) --analyse --seed $(SEED) 2>nul
 
 run: $(TARGET)
 	./$(TARGET) $(ARGS)

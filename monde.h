@@ -19,7 +19,6 @@ typedef enum CaseType {
     VIDE,
     DANGER,
     MUR
-    // JOUEUR
 } CaseType;
 
 //* Partie élémentaire d'un monde ou d'une carte
@@ -63,6 +62,7 @@ int get_centre_y(Monde* monde);
 int get_taille_ligne(Monde* monde);
 int get_taille_totale(Monde* monde);
 int get_nb_cases_explorees(Monde* monde);
+int get_nb_cases_explorables(Monde* monde);
 
 Case** get_grille_monde(Monde* monde);
 Case** get_carte_base(Monde* monde);

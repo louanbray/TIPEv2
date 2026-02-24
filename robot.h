@@ -30,6 +30,9 @@ EtatRobot actualiser_robot(Robot* robot);
 //* Accesseurs
 int get_robot_x(Robot* robot);
 int get_robot_y(Robot* robot);
+int get_donnees_transmises_robot(Robot* robot);
+int get_donnees_perdues_robot(Robot* robot);
+int get_donnees_nettes_perdues_robot(Robot* robot);
 
 //* Permet d'accéder à la carte interne du robot
 //? Utilisé pour débug
