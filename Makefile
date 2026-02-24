@@ -43,8 +43,20 @@ $(BUILD)/utils.o:      utils.c      utils.h
 #  Utilitaires
 # ============================================================
 
+# Arguments disponibles (voir main.c) :
+#   --log           : Activer la journalisation
+#   --xlog          : Activer la journalisation détaillée
+#   --print         : Afficher les cartes à la fin de la simulation
+#   --xprint        : Afficher les cartes détaillées à la fin de la simulation
+#   --debug         : Activer le mode debug (log + print)
+#   --xdebug        : Activer le mode debug détaillé (xlog + xprint)
+#   --seed <number> : Définir la graine pour la génération aléatoire
+#
+# Utilisation : make run ARGS="--log --seed 42"
+ARGS ?=
+
 run: $(TARGET)
-	./$(TARGET)
+	./$(TARGET) $(ARGS)
 
 clean:
 	rm -rf $(BUILD)

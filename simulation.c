@@ -131,7 +131,7 @@ void detruire_simulation(Simulation* simulation) {
 }
 
 //* Affiche les cartes de tout les simulés
-void print_simulation(Simulation* simulation) {
+void print_simulation(Simulation* simulation, bool details) {
     Monde* monde = simulation->monde;
     printf("\n\n\n\n-----------------------------------------------------");
     printf("\n              Simulation (ID:%d)", simulation->idSimulation);
@@ -140,6 +140,7 @@ void print_simulation(Simulation* simulation) {
     print_carte(monde, get_grille_monde(monde), get_centre_x(monde), get_centre_y(monde));
     printf("\n\n\n-------------------- Carte(Base) --------------------");
     print_carte(monde, get_carte_base(monde), -1, -1);
+    if (!details) return;
     for (int i = 0; i < simulation->nombreDeRobots; i++) {
         Robot* robot = simulation->robots[i];
         if (!simulation->robotsEnVie[i])

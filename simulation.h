@@ -15,6 +15,6 @@ int demarre_simulation(Simulation* simulation, bool labyrinthe);
 void detruire_simulation(Simulation* simulation);
 
 //* Affiche les cartes de tout les simulés
-void print_simulation(Simulation* simulation);
+void print_simulation(Simulation* simulation, bool details);
 
 #endif  // !SIMULATION_H
