@@ -104,10 +104,10 @@ int boucle_principale(Simulation* simulation) {
 }
 
 //* Lance la simulation
-int demarre_simulation(Simulation* simulation, bool labyrinthe) {
+int demarre_simulation(Simulation* simulation, bool labyrinthe, double proba_danger, double milieu, double deviation) {
     if (simulation->etat != BLANK) return -1;
 
-    peupler_monde(simulation->monde, labyrinthe);
+    peupler_monde(simulation->monde, labyrinthe, proba_danger, milieu, deviation);
     simulation->etat = EN_COURS;
 
     JOURNAL_INFO("Début de la simulation (ID:%d)", simulation->idSimulation);

@@ -3,9 +3,9 @@
 #include <stdbool.h>
 
 //* Utile pour la dispertion de danger dans le monde
-#define PROBA_DANGER 0.05
-#define MILIEU 0.1
-#define DEVIATION 0.05
+#define PROBA_DANGER 0.1
+#define MILIEU 0.2
+#define DEVIATION 0.1
 
 //* Utile pour la génération de murs aléatoires
 #define PROBA_MUR 0.3
@@ -45,8 +45,8 @@ Monde* creer_monde(int rayon);
 //* Libère la mémoire du Monde
 void detruire_monde(Monde* monde);
 
-//* Génère le monde
-void peupler_monde(Monde* monde, bool labyrinthe);
+//* Génère le monde (proba_danger=densité cases danger, milieu/deviation=létalité)
+void peupler_monde(Monde* monde, bool labyrinthe, double proba_danger, double milieu, double deviation);
 //* Permet d'ajouter une liste de découvertes à la carte interne de la base
 void mettre_a_jour_journal(Monde* monde, Decouverte* nouvelles_decouvertes, int nb_nouvelles);
 //* Permet de demander à la base les nouvelles découvertes depuis le dernier passage

@@ -11,7 +11,8 @@ typedef struct Simulation Simulation;
 Simulation* creer_simulation(int rayon, int nombreRobots, int temps_de_cycle, int autonomie_initiale);
 
 //* Lance la simulation (labyrinthe=true : labyrinthe DFS, false : murs aléatoires)
-int demarre_simulation(Simulation* simulation, bool labyrinthe);
+//* proba_danger=densité cases danger, milieu/deviation=létalité moyenne et dispersion
+int demarre_simulation(Simulation* simulation, bool labyrinthe, double proba_danger, double milieu, double deviation);
 
 //* Libère la mémoire de la simulation et de tous ses composants
 void detruire_simulation(Simulation* simulation);

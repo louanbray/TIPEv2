@@ -123,16 +123,16 @@ void generer_mine(Monde* monde, bool labyrinthe) {
     monde->nb_cases_explorables = nb_explorables;
 }
 
-//* Génère les cases "danger" avec une probabilité PROBA_DANGER
-void generer_dangers(Monde* monde) {
+//* Génère les cases "danger" avec les paramètres fournis
+static void generer_dangers(Monde* monde, double proba_danger, double milieu, double deviation) {
     int nb_dangers = 0;
 
     for (int i = 0; i < monde->taille_ligne; i++) {
         for (int j = 0; j < monde->taille_ligne; j++) {
             if (i == monde->centre_y && j == monde->centre_x) continue;
-            if (monde->grille[i][j].type == VIDE && barriere_probabiliste(PROBA_DANGER)) {
+            if (monde->grille[i][j].type == VIDE && barriere_probabiliste(proba_danger)) {
                 monde->grille[i][j].type = DANGER;
-                monde->grille[i][j].proba_danger = nombre_autour_de(MILIEU, DEVIATION);
+                monde->grille[i][j].proba_danger = nombre_autour_de(milieu, deviation);
                 nb_dangers++;
             }
         }
@@ -141,11 +141,11 @@ void generer_dangers(Monde* monde) {
     JOURNAL_INFO("Dangers generes : %d case(s) sur %d vides (%.1f%%) (monde: %p)", nb_dangers, monde->nb_cases_explorables, 100.0 * nb_dangers / monde->nb_cases_explorables, (void*)monde);
 }
 
-//* Génère le monde
-void peupler_monde(Monde* monde, bool labyrinthe) {
+//* Génère le monde (proba_danger=densité cases danger, milieu/deviation=létalité)
+void peupler_monde(Monde* monde, bool labyrinthe, double proba_danger, double milieu, double deviation) {
     JOURNAL_INFO("Début de la génération du terrain - Labyrinthe : %d (monde: %p)", labyrinthe, (void*)monde);
     generer_mine(monde, labyrinthe);
-    generer_dangers(monde);
+    generer_dangers(monde, proba_danger, milieu, deviation);
     JOURNAL_INFO("Terrain entièrement généré (monde: %p)", (void*)monde);
 }
 
