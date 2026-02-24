@@ -99,7 +99,7 @@ void arguments(int argc, char* argv[],
             printf("  --xdebug            : xlog + xprint\n");
             printf("  --seed <n>          : Graine aleatoire (defaut: time)\n");
             printf("  --cycle <n>         : Temps de cycle (defaut: 50)\n");
-            printf("  --robots <n>        : Nombre de robots (defaut: 200)\n");
+            printf("  --robots <n>        : Nombre de robots (defaut: 5)\n");
             printf("  --rayon <n>         : Rayon du monde (defaut: 20)\n");
             printf("  --autonomie <n>     : Autonomie initiale (defaut: 500)\n");
             printf("  --analyse           : Analyse CSV sur differents temps de cycle\n");
@@ -108,18 +108,19 @@ void arguments(int argc, char* argv[],
             printf("  --proba-danger <f>  : Densite de cases danger (defaut: %.2f)\n", PROBA_DANGER);
             printf("  --milieu <f>        : Letalite moyenne des cases danger (defaut: %.2f)\n", MILIEU);
             printf("  --deviation <f>     : Dispersion de la letalite (defaut: %.2f)\n", DEVIATION);
-            printf("  --topt             : Calcule T*(danger) sur plusieurs niveaux de danger\n");
+            printf("  --topt              : Calcule T*(danger) sur plusieurs niveaux de danger\n");
             printf("  --analyses <n>      : Nb d'analyses independantes pour --topt (defaut: 100)\n");
             printf("  --danger-min <f>    : Danger minimum pour --topt (defaut: 0.0)\n");
             printf("  --danger-max <f>    : Danger maximum pour --topt (defaut: 0.30)\n");
             printf("  --danger-pas <f>    : Pas de danger pour --topt (defaut: 0.05)\n");
-            printf("  --milieu-ratio <f>  : milieu = ratio * proba_danger (defaut: 2.0)\n");
-            printf("  --deviation-ratio <f>: deviation = ratio * proba_danger (defaut: 1.0)\n");
+            printf("  --milieu-ratio <f>  : (topt) milieu = ratio * d pour chaque d ; ecrase --milieu\n");
+            printf("  --deviation-ratio <f>: (topt) deviation = ratio * d pour chaque d ; ecrase --deviation\n");
             printf("\nExemples :\n");
             printf("  %s --print\n", argv[0]);
             printf("  %s --seed 42 --cycle 80 --print\n", argv[0]);
             printf("  %s --analyse --seed 42 --proba-danger 0.1 --milieu 0.2 --deviation 0.1 > resultats.csv\n", argv[0]);
             printf("  %s --topt --seed 42 --analyses 100 --repetitions 50 > topt.csv\n", argv[0]);
+            printf("  %s --topt --analyses 100 --repetitions 50 --danger-min 0.0 --danger-max 0.30 --danger-pas 0.005 > tstar.csv\n", argv[0]);
             exit(EXIT_SUCCESS);
         }
     }
@@ -154,17 +155,25 @@ void lance_analyse(int seed, int rayon, int nb_robots, int autonomie, int pas, i
 
 //* Pour chaque niveau de danger, calcule T* = le temps de cycle qui maximise exploration_pct.
 //* T* est obtenu en moyennant le pic de 'nb_analyses' courbes independantes (seeds distincts).
+//* milieu/deviation sont fixes sauf si milieu_ratio/deviation_ratio >= 0 (alors ratio * d).
 //* Affiche un CSV : proba_danger, milieu, deviation, topt_moyen
 void lance_topt(int seed, int rayon, int nb_robots, int autonomie, int pas, int repetitions,
                 int nb_analyses, double danger_min, double danger_max, double danger_pas_d,
+                double milieu_fixe, double deviation_fixe,
                 double milieu_ratio, double deviation_ratio) {
     fprintf(stderr, "[T-opt] rayon=%d  robots=%d  autonomie=%d  pas=%d  rep=%d  analyses=%d\n", rayon, nb_robots, autonomie, pas, repetitions, nb_analyses);
-    fprintf(stderr, "[T-opt] danger %.3f->%.3f (step=%.3f)  milieu=%.2f*d  deviation=%.2f*d\n", danger_min, danger_max, danger_pas_d, milieu_ratio, deviation_ratio);
+    if (milieu_ratio >= 0 || deviation_ratio >= 0)
+        fprintf(stderr, "[T-opt] danger %.3f->%.3f (step=%.3f)  milieu=%s  deviation=%s\n",
+                danger_min, danger_max, danger_pas_d,
+                milieu_ratio >= 0 ? "ratio*d" : "fixe",
+                deviation_ratio >= 0 ? "ratio*d" : "fixe");
+    else
+        fprintf(stderr, "[T-opt] danger %.3f->%.3f (step=%.3f)  milieu=%.3f (fixe)  deviation=%.3f (fixe)\n", danger_min, danger_max, danger_pas_d, milieu_fixe, deviation_fixe);
     printf("proba_danger,milieu,deviation,topt_moyen\n");
 
     for (double d = danger_min; d <= danger_max + 1e-9; d += danger_pas_d) {
-        double milieu = milieu_ratio * d;
-        double deviation = deviation_ratio * d;
+        double milieu = (milieu_ratio >= 0) ? milieu_ratio * d : milieu_fixe;
+        double deviation = (deviation_ratio >= 0) ? deviation_ratio * d : deviation_fixe;
         double somme_topt = 0.0;
 
         for (int a = 0; a < nb_analyses; a++) {
@@ -209,7 +218,7 @@ int main(int argc, char* argv[]) {
     double proba_danger = PROBA_DANGER, milieu = MILIEU, deviation = DEVIATION;
     int nb_analyses = 100;
     double danger_min = 0.0, danger_max = 0.30, danger_pas_d = 0.05;
-    double milieu_ratio = 2.0, deviation_ratio = 1.0;
+    double milieu_ratio = -1.0, deviation_ratio = -1.0;  // -1 = non active, utilise --milieu/--deviation fixes
 
     arguments(argc, argv,
               &log, &xlog, &print, &xprint,
@@ -225,10 +234,10 @@ int main(int argc, char* argv[]) {
     if (topt) {
         lance_topt(seed, rayon, robots, autonomie, pas, repetitions,
                    nb_analyses, danger_min, danger_max, danger_pas_d,
+                   milieu, deviation,
                    milieu_ratio, deviation_ratio);
     } else if (analyse) {
-        lance_analyse(seed, rayon, robots, autonomie, pas, repetitions,
-                      proba_danger, milieu, deviation);
+        lance_analyse(seed, rayon, robots, autonomie, pas, repetitions, proba_danger, milieu, deviation);
     } else {
         Simulation* sim = creer_simulation(rayon, robots, cycle, autonomie);
         demarre_simulation(sim, false, proba_danger, milieu, deviation);

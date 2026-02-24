@@ -3,4 +3,4 @@ simulations.log
 *.exe
 build/
 derniere_analyse.log
-data.csv
+*.csv
