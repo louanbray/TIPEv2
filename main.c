@@ -77,7 +77,7 @@ void arguments(int argc, char* argv[], bool* log, bool* xlog, bool* print, bool*
 }
 
 //* Lance une serie de simulations en faisant varier le temps de cycle.
-//* Pour chaque cycle, moyenne sur 'repetitions' runs (seeds : seed+0 .. seed+n-1).
+//* Pour chaque cycle, moyenne sur 'repetitions' simulations (seeds : seed+0 .. seed+n-1).
 //* Affiche les resultats au format CSV sur stdout (redirigeable vers fichier .csv).
 void lance_analyse(int seed, int rayon, int nb_robots, int autonomie, int pas, int repetitions) {
     fprintf(stderr, "[Analyse] rayon=%d  robots=%d  autonomie=%d  pas=%d  repetitions=%d  seed=%d\n", rayon, nb_robots, autonomie, pas, repetitions, seed);
