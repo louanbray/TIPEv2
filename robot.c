@@ -7,19 +7,20 @@
 #include "utils.h"
 
 //* Etat du robot dans sa routine
-typedef enum EtatRobot {
+typedef enum EtatExploration {
     EXPLORATION,
     RETOUR,
     RECHERCHE_INEXPLORE,
-    TRANSFERT_DE_DONNEE
-} EtatRobot;
+    RECHERCHE_CIBLE,
+    TRANSFERT_DE_DONNEE,
+} EtatExploration;
 
 //* La structure contenant les premiers habitants de ce monde: les robots
 typedef struct Robot {
     Monde* monde;
     Case** carte;
     Decouverte* journal_local;
-    EtatRobot etat;
+    EtatExploration etat;
     int nombre_decouvertes;
     int dernier_index_de_maj;
     int x;
@@ -72,7 +73,7 @@ Robot* creer_robot(Monde* monde, int temps_de_cycle, int autonomie_initiale) {
 }
 
 //* Forward declaration (définie plus bas, après les BFS)
-static void entrer_dans_phase(Robot* robot, EtatRobot etat_cible);
+static void entrer_dans_phase(Robot* robot, EtatExploration etat_cible);
 
 //* Permet à un robot de se synchroniser à la carte de la base du monde qu'il explore
 void synchroniser_robot(Robot* robot) {
@@ -82,7 +83,7 @@ void synchroniser_robot(Robot* robot) {
     mettre_a_jour_journal(robot->monde, robot->journal_local, robot->nombre_decouvertes);
 
     robot->nombre_decouvertes = 0;
-    entrer_dans_phase(robot, RECHERCHE_INEXPLORE);
+    entrer_dans_phase(robot, RECHERCHE_CIBLE);
 }
 
 //* Réduis l'autonomie du robot et modifie son état s'il est à cours de batterie
@@ -351,7 +352,7 @@ static int bfs_vers_inexploree(Robot* robot) {
 
 //* Prépare le robot pour une nouvelle phase (RETOUR ou RECHERCHE_INEXPLORE)
 //* Calcule et stocke le chemin complet une seule fois, puis met à jour l'état du robot
-static void entrer_dans_phase(Robot* robot, EtatRobot etat_cible) {
+static void entrer_dans_phase(Robot* robot, EtatExploration etat_cible) {
     if (etat_cible == RETOUR) {
         int centre_x = get_centre_x(robot->monde);
         int centre_y = get_centre_y(robot->monde);
@@ -366,10 +367,10 @@ static void entrer_dans_phase(Robot* robot, EtatRobot etat_cible) {
             robot->etat = RETOUR;  // Cas anormal, ne devrait pas arriver
             JOURNAL_AVERT("Robot (%p) : aucun chemin vers la base !", (void*)robot);
         }
-    } else if (etat_cible == RECHERCHE_INEXPLORE) {
+    } else if (etat_cible == RECHERCHE_INEXPLORE || etat_cible == RECHERCHE_CIBLE) {
         int longueur = bfs_vers_inexploree(robot);
         if (longueur > 0) {
-            robot->etat = RECHERCHE_INEXPLORE;
+            robot->etat = etat_cible;
             JOURNAL_INFO("Robot (%p) cible inexplorée (%d,%d) | chemin : %d pas", (void*)robot, robot->cible_x, robot->cible_y, longueur);
         } else if (longueur == 0) {
             // Case inexplorée adjacente (cas theorique)
@@ -427,8 +428,8 @@ void exploration_robot(Robot* robot) {
 }
 
 //* Routine du robot (renvoie 1 si le robot est en vie, 0 sinon)
-int actualiser_robot(Robot* robot) {
-    EtatRobot etat = robot->etat;
+EtatRobot actualiser_robot(Robot* robot) {
+    EtatExploration etat = robot->etat;
     switch (etat) {
         case EXPLORATION:
             exploration_robot(robot);
@@ -445,7 +446,8 @@ int actualiser_robot(Robot* robot) {
             }
             break;
         }
-        case RECHERCHE_INEXPLORE: {
+        case RECHERCHE_INEXPLORE:
+        case RECHERCHE_CIBLE: {
             if (robot->cible_etape < robot->cible_longueur) {
                 robot->x = robot->cible_chemin_x[robot->cible_etape];
                 robot->y = robot->cible_chemin_y[robot->cible_etape];
@@ -467,15 +469,15 @@ int actualiser_robot(Robot* robot) {
     }
 
     if (robot->alive) {
-        if (etat == EXPLORATION) decremente_timer_robot(robot);
+        if (etat == EXPLORATION || (etat == RECHERCHE_INEXPLORE && TIMER_ABSOLU)) decremente_timer_robot(robot);
         if (etat != TRANSFERT_DE_DONNEE) degrade_robot(robot);
     }
     if (!robot->alive)
-        return 0;  //! TODO : Implémenter la mort du robot + les stats de données perdues etc...
+        return HORS_SERVICE;  //! TODO : Implémenter la mort du robot + les stats de données perdues etc...
     if (robot->en_attente) {
-        return 2;  //! Le robot n'est pas mort mais il n'a plus rien à faire.
+        return EN_ATTENTE;  //! Le robot n'est pas mort mais il n'a plus rien à faire.
     }
-    return 1;
+    return EN_VIE;
 }
 
 //* Accesseurs

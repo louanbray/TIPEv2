@@ -66,13 +66,12 @@ void simule_avancement(Simulation* simulation) {
     for (int i = 0; i < simulation->nombreDeRobots; i++) {
         if (!simulation->robotsEnVie[i]) continue;
         if (simulation->robotsEnAttente[i]) continue;
-        int val = actualiser_robot(simulation->robots[i]);
-        if (val == 0) {
+        EtatRobot etat_robot = actualiser_robot(simulation->robots[i]);
+        if (etat_robot == HORS_SERVICE) {
             simulation->robotsEnVie[i] = false;
             simulation->nombreDeRobotsEnVie--;
             JOURNAL_AVERT("Robot (%p) hors service | robots restants : %d/%d", (void*)simulation->robots[i], simulation->nombreDeRobotsEnVie, simulation->nombreDeRobots);
-        } else if (val == 2) {
-            if (simulation->robotsEnAttente[i]) continue;
+        } else if (etat_robot == EN_ATTENTE) {
             simulation->robotsEnAttente[i] = true;
             simulation->nombreDeRobotsEnAttente++;
             JOURNAL_INFO("Robot (%p) a fini son exploration | robots en veille : %d/%d", (void*)simulation->robots[i], simulation->nombreDeRobotsEnAttente, simulation->nombreDeRobots);
