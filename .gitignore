@@ -1,6 +1,5 @@
-simulations.log
 *.o
 *.exe
 build/
-derniere_analyse.log
+*.log
 *.csv

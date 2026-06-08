@@ -62,12 +62,16 @@ $(BUILD)/utils.o:      utils.c      utils.h
 #   --pas <n>           : Pas du cycle pour --analyse et --topt (defaut: 5)
 #   --repetitions <n>   : Simulations par pas (defaut: 100)
 #   --topt              : Calcule T*(danger) sur plusieurs niveaux de danger
+#   --topt-autonomie    : Calcule T*(autonomie) sur plusieurs autonomies
 #   --analyses <n>      : Nb d'analyses independantes pour --topt (defaut: 100)
 #   --danger-min <f>    : Danger minimum pour --topt (defaut: 0.0)
 #   --danger-max <f>    : Danger maximum pour --topt (defaut: 0.30)
 #   --danger-pas <f>    : Pas de danger pour --topt (defaut: 0.05)
 #   --milieu-ratio <f>  : (topt) milieu = ratio * d pour chaque d ; ecrase --milieu
 #   --deviation-ratio <f>: (topt) deviation = ratio * d pour chaque d ; ecrase --deviation
+#   --autonomie-min <n> : (topt-autonomie) autonomie minimum (defaut: 0)
+#   --autonomie-max <n> : (topt-autonomie) autonomie maximum (defaut: 3365)
+#   --autonomie-pas <n> : (topt-autonomie) pas d'autonomie (defaut: 5)
 #
 # Exemples :
 #   make run ARGS="--print"
@@ -76,6 +80,10 @@ $(BUILD)/utils.o:      utils.c      utils.h
 #   make analyse SEED=42 ARGS="--repetitions 500 --proba-danger 0.1 --milieu 0.2 --deviation 0.1"
 #   make topt SEED=42
 #   make topt SEED=42 ARGS="--analyses 100 --repetitions 50 --danger-min 0.0 --danger-max 0.30 --danger-pas 0.025"
+#   make topt_total SEED=42
+#   make topt_total SEED=42 ARGS="--analyses 100 --repetitions 50 --autonomie-min 0 --autonomie-max 3365 --autonomie-pas 25 --danger-min 0.0 --danger-max 0.30 --danger-pas 0.05"
+#   make topt_autonomie SEED=42
+#   make topt_autonomie SEED=42 ARGS="--analyses 100 --repetitions 50 --autonomie-min 0 --autonomie-max 3365 --autonomie-pas 5"
 ARGS ?=
 SEED ?= 0
 
@@ -84,6 +92,12 @@ analyse: $(TARGET)
 
 topt: $(TARGET)
 	./$(TARGET) --topt --seed $(SEED) $(ARGS) > tstar.csv 2>derniere_topt.log
+
+topt_total: $(TARGET)
+	./$(TARGET) --topt-total --seed $(SEED) $(ARGS) > topt_total.csv 2>derniere_topt_total.log
+
+topt_autonomie: $(TARGET)
+	./$(TARGET) --topt-autonomie --seed $(SEED) $(ARGS) > topt_autonomie.csv 2>derniere_topt_autonomie.log
 
 run: $(TARGET)
 	./$(TARGET) $(ARGS)
@@ -94,4 +108,4 @@ clean:
 
 rebuild: clean all
 
-.PHONY: all run clean rebuild analyse topt
+.PHONY: all run clean rebuild analyse topt topt_total topt_autonomie

@@ -11,7 +11,6 @@ typedef enum EtatExploration {
     EXPLORATION,
     RETOUR,
     RECHERCHE_INEXPLORE,
-    RECHERCHE_CIBLE,
     TRANSFERT_DE_DONNEE,
 } EtatExploration;
 
@@ -88,7 +87,7 @@ void synchroniser_robot(Robot* robot) {
 
     robot->donnees_transmises += robot->nombre_decouvertes;
     robot->nombre_decouvertes = 0;
-    entrer_dans_phase(robot, RECHERCHE_CIBLE);
+    entrer_dans_phase(robot, RECHERCHE_INEXPLORE);
 }
 
 //* Figer les pertes nettes au moment de la mort : cases du journal local inconnues de la base à cet instant
@@ -387,7 +386,7 @@ static void entrer_dans_phase(Robot* robot, EtatExploration etat_cible) {
             robot->etat = RETOUR;  // Cas anormal, ne devrait pas arriver
             JOURNAL_AVERT("Robot (%p) : aucun chemin vers la base !", (void*)robot);
         }
-    } else if (etat_cible == RECHERCHE_INEXPLORE || etat_cible == RECHERCHE_CIBLE) {
+    } else if (etat_cible == RECHERCHE_INEXPLORE) {
         int longueur = bfs_vers_inexploree(robot);
         if (longueur > 0) {
             robot->etat = etat_cible;
@@ -466,8 +465,7 @@ EtatRobot actualiser_robot(Robot* robot) {
             }
             break;
         }
-        case RECHERCHE_INEXPLORE:
-        case RECHERCHE_CIBLE: {
+        case RECHERCHE_INEXPLORE: {
             if (robot->cible_etape < robot->cible_longueur) {
                 robot->x = robot->cible_chemin_x[robot->cible_etape];
                 robot->y = robot->cible_chemin_y[robot->cible_etape];
